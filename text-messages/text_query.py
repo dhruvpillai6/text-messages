@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 pandas.set_option('display.max_columns', None)
+pandas.options.mode.chained_assignment = None
 
 def text_query(WHERE='', LIMIT=''):
     user = os.path.expanduser('~')
@@ -24,7 +25,7 @@ def text_query(WHERE='', LIMIT=''):
     else:
         WHERE_string = 'WHERE ' + \
                         str(WHERE) + ' '
-    if LIMIT == '':
+    if LIMIT == ('' or None):
         LIMIT_string = ''
     else:
         LIMIT_string = 'LIMIT ' + \
@@ -35,4 +36,4 @@ def text_query(WHERE='', LIMIT=''):
     return pandas.read_sql_query(SQL_STRING, conn)
 
 if __name__ == '__main__':
-    text_query(WHERE='handle_id = 1', LIMIT=10)
+    print(type(text_query(WHERE='handle_id = 1', LIMIT=10).loc[0, 'local_date']))
