@@ -56,10 +56,10 @@ class Conversation:
             self.dataframe['sent'].apply(lambda x: numpy.nan if x == 0 else x)
         self.dataframe = self.dataframe.groupby(self.dataframe.local_date).count()
         self.dataframe['received'] = self.dataframe['total'] - self.dataframe['sent']
-        print(self.dataframe)
         self.dataframe.plot()
         matplotlib.pyplot.show()
 
 if __name__ == '__main__':
     pranav = Conversation(6, 10)
     pranav.histogram()
+    print(pranav)
