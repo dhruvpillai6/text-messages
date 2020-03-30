@@ -13,7 +13,7 @@ class Contact:
 
     def __repr__(self):
         return f'<Contact>{self.name}' if self.name else f'<Contact>{self.number} ' \
-                                                         f'{self.handle_id}'
+                                                         f'(handle_id {self.handle_id})'
 
 
 class TextMessage:
@@ -33,9 +33,12 @@ class TextMessage:
 
 class TextGroup:
     def __init__(self, contacts, limit=None):
-        if contacts is not None:
-            if not isinstance(contacts, list):
-                raise TypeError('handle_id must of type list')
+        self.contacts = []
+        all_contacts = text_query.generate_address_book()
+        for index, row in all_contacts.iterrows():
+            self.contacts.append(Contact(row['id'], index))
+
+        contacts = self.return_contacts(contacts)[1]
 
         self.texts = []
         self.dataframe = None
@@ -66,6 +69,21 @@ class TextGroup:
         self.dataframe.loc[:, 'local_date'] = \
             self.dataframe.loc[:, 'local_date'].apply(
                     lambda x: datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S').date())
+
+    def return_contacts(self, number):
+        contacts = []
+        if '+' not in str(number):
+            number = f'+1{str(number)}'
+        number.replace("-", "")
+        returned_contact = []
+        for contact in self.contacts:
+            if number in contact.number:
+                contacts.append(contact)
+                returned_contact.append(contact)
+        if len(contacts) > 0:
+            return contacts, returned_contact
+
+        raise ValueError(f'The entered phone number {number} is not in the database')
 
     def generate_histogram(self, dataframe, moving_average_window=None):
         dataframe.drop(columns=['handle_id', 'id'], inplace=True)
@@ -132,7 +150,8 @@ class Conversation(TextGroup):
     #     return dataframe
 
     def plot_histogram(self, moving_average_window=None):
-        self.generate_histogram(self.dataframe, moving_average_window).plot()
+        self.generate_histogram(self.dataframe, moving_average_window).plot(
+                title=f'Total Text Messages with {self.contact}')
         matplotlib.pyplot.show()
 
     # def filter_by_content(self, *args, moving_average_window=None, dataframe=None):
@@ -150,35 +169,17 @@ class Conversation(TextGroup):
 
     def plot_filtered_histogram(self, *args, moving_average_window=None):
         self.filter_by_content(moving_average_window, args).plot()
-        matplotlib.pyplot.show()
+        matplotlib.pyplot.show(title=f'Total Text Messages with {contact}')
 
 
 class AllTexts(TextGroup):
     def __init__(self, handle_id=None, limit=None):
         super().__init__(handle_id, limit)
-        self.contacts = []
-        contacts = text_query.generate_address_book()
-        for index, row in contacts.iterrows():
-            self.contacts.append(Contact(row['id'], index))
 
-    def return_contact(self, number):
-        contacts = []
-        if '+' not in str(number):
-            number = f'+1{str(number)}'
-        number.replace("-", "")
-        for contact in self.contacts:
-            if number in contact.number:
-                contacts.append(contact)
-        if len(contacts) > 0:
-            return contacts
-
-        raise ValueError(f'The entered phone number {number} is not in the database')
-
-    def normalized_histogram(self, contact, moving_average_window=None):
+    def normalized_histogram(self, contact, moving_average_window=None, limit=None):
         if not isinstance(contact, Contact):
-            contacts = self.return_contact(contact)
-        conversation = Conversation(contacts, limit=1000)
-        print('this\n', self.dataframe.index, 'that\n', conversation.dataframe.index)
+            contacts = self.return_contacts(contact)
+        conversation = Conversation(contacts[0], limit)
         all_texts_histo = self.generate_histogram(self.dataframe,
                                                   moving_average_window)
 
@@ -199,16 +200,13 @@ class AllTexts(TextGroup):
         return contact_histo
 
     def plot_normalized_histo(self, contact, dataframe=None,
-                              moving_average_window=None):
+                              moving_average_window=None, limit=None):
         if dataframe is None:
-            dataframe = self.normalized_histogram(contact, moving_average_window)
-        dataframe.plot()
+            dataframe = self.normalized_histogram(contact, moving_average_window, limit)
+        contact = self.return_contacts(contact)[1][0]
+        dataframe.plot(title=f'Text Message Ratio with {contact}')
         matplotlib.pyplot.show()
 
 
 if __name__ == '__main__':
-    # pranav = Conversation(6)
-    # pranav.plot_histogram()
-    # print(pranav)
-    all = AllTexts(limit=100000)
-    all.plot_normalized_histo(6109458605)
+    pass
