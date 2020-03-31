@@ -130,42 +130,10 @@ class Conversation(TextGroup):
     def __len__(self):
         return len(self.texts)
 
-    # def generate_histogram(self, dataframe, moving_average_window=None):
-    #     dataframe.loc[:, 'local_date'] = \
-    #         dataframe.loc[:, 'local_date'].apply(
-    #                 lambda x: datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S').date())
-    #     dataframe.drop(columns=['handle_id', 'id'], inplace=True)
-    #     dataframe.rename(columns={'text': 'total'}, inplace=True)
-    #     dataframe.loc[:, 'sent'] = \
-    #         dataframe['sent'].apply(lambda x: numpy.nan if x == 0 else x)
-    #     dataframe = dataframe.groupby(dataframe.local_date).count()
-    #     dataframe['received'] = dataframe['total'] - dataframe['sent']
-    #
-    #     if moving_average_window:
-    #         if not isinstance(moving_average_window, int):
-    #             raise TypeError(f'Your moving average input was {moving_average_window}'
-    #                             f' and needs to be of type int')
-    #         dataframe = dataframe.rolling(window=moving_average_window).mean()
-    #
-    #     return dataframe
-
     def plot_histogram(self, moving_average_window=None):
         self.generate_histogram(self.dataframe, moving_average_window).plot(
                 title=f'Total Text Messages with {self.contact}')
         matplotlib.pyplot.show()
-
-    # def filter_by_content(self, *args, moving_average_window=None, dataframe=None):
-    #     if dataframe is None:
-    #         dataframe = self.dataframe
-    #     elif not isinstance(dataframe, pandas.DataFrame):
-    #         raise TypeError(f'Expected input dataframe, instead got {type(dataframe)}')
-    #     for arg in args:
-    #         if isinstance(arg, tuple):
-    #             for item in arg:
-    #                 dataframe = \
-    #                     dataframe[dataframe['text'].str.lower().str.contains(item)]
-    #     dataframe = self.generate_histogram(dataframe, moving_average_window)
-    #     return dataframe
 
     def plot_filtered_histogram(self, *args, moving_average_window=None):
         self.filter_by_content(moving_average_window, args).plot()
