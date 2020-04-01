@@ -12,6 +12,7 @@ def connect_to_iMessage_database():
     return sqlite3.connect(path_to_database)
 
 def text_query(WHERE='', LIMIT=''):
+    # TODO: Change to fstrings instead of string building
     conn = connect_to_iMessage_database()
     SELECT_string = 'SELECT ' + \
                     'datetime(message.date/1000000000 + strftime("%s", "2001-01-01"),' \

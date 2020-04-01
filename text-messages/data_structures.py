@@ -3,6 +3,7 @@ import datetime
 import matplotlib
 import numpy
 import pandas
+from collections import Counter
 
 
 class Contact:
@@ -32,13 +33,15 @@ class TextMessage:
 
 
 class TextGroup:
-    def __init__(self, contacts, limit=None):
+    def __init__(self, contacts=None, limit=None):
         self.contacts = []
         all_contacts = text_query.generate_address_book()
+        # TODO: Use list comp
         for index, row in all_contacts.iterrows():
             self.contacts.append(Contact(row['id'], index))
 
-        contacts = self.return_contacts(contacts)[1]
+        if contacts:
+            contacts = self.return_contacts(contacts)[1]
 
         self.texts = []
         self.dataframe = None
@@ -104,6 +107,24 @@ class TextGroup:
         return dataframe
 
     def filter_by_content(self, *args, moving_average_window=None, dataframe=None):
+        """
+        Usage: Use to plot a histogram of texts exchanged in a conversation and
+        filtering by the keywords provided in ags.
+        :param args: Words that must be in the text messages. Entered as separate
+        arguments. All words should be entered as strings. Enforces a logical
+        'and'--will only return text messages that contain all of the words,
+        is unable to do 'or'.
+        :param moving_average_window: an int, in days, that should be used to obtain
+        a moving average
+        :param dataframe: a pandas DataFrame containing text message data
+        :return: pandas DataFrame containing the number of filtered text messages,
+        binned by date.
+        """
+        # TODO: Handle args that are ints but should be strings
+        # TODO: Provide a help function explaining parameters
+        # TODO: Handle 'or'--curently just works for 'and'
+        # TODO: Cleanse the inputs from the user--cast args to str
+        # TODO: Handle empty args
         if dataframe is None:
             dataframe = self.dataframe
         elif not isinstance(dataframe, pandas.DataFrame):
@@ -115,6 +136,38 @@ class TextGroup:
                         dataframe[dataframe['text'].str.lower().str.contains(item)]
         dataframe = self.generate_histogram(dataframe, moving_average_window)
         return dataframe
+
+    def most_frequent_words(self, dataframe=None, lowest_rank=10):
+        """
+        Takes in a pandas DataFrame of text messages and outputs the most frequently
+        used words in that set of text messages.
+        :param dataframe: a pandas DataFrame of text messages, which will be the
+        source of the text messages that will be counted
+        :param lowest_rank: The lowest rank that will be output by the method. By
+        default the method will output the top 10 words.
+        :return: pandas.DataFrame with common words and the frequency with which they
+        are seen in text messages
+        """
+        if not dataframe:
+            dataframe = self.dataframe
+        print(dataframe)
+        lists_of_texts = dataframe["text"].str.lower().str.split().tolist()
+        master_list = []
+        for list in lists_of_texts:
+            # Handle the case where the text message is empty, like a person sending
+            # a picture
+            if list is None:
+                continue
+            for item in list:
+                master_list.append(item)
+
+        world_count_tups = Counter(master_list).most_common(lowest_rank)
+        word_count = []
+        for tup in world_count_tups:
+            word_count.append((tup[0], round(tup[1]/len(master_list), 3)))
+
+        return pandas.DataFrame(word_count)
+
 
 class Conversation(TextGroup):
     def __init__(self, handle_id=None, limit=None):
@@ -130,8 +183,9 @@ class Conversation(TextGroup):
     def __len__(self):
         return len(self.texts)
 
-    def plot_histogram(self, moving_average_window=None):
-        self.generate_histogram(self.dataframe, moving_average_window).plot(
+    def plot_histogram(self, dataframe=None, moving_average_window=None):
+        dataframe = self.dataframe.copy() if not dataframe else dataframe
+        self.generate_histogram(dataframe, moving_average_window).plot(
                 title=f'Total Text Messages with {self.contact}')
         matplotlib.pyplot.show()
 

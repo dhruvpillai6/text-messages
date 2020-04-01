@@ -1,6 +1,6 @@
 # text-messages
 
-This readme is under construction. Please excuse the brevity.brevity
+This readme is under construction. Please excuse the brevity.
 
 # Usage
 
@@ -21,6 +21,6 @@ history.
 
 1. Instantiate a `AllTexts` object (pass in `limit=` as a kwarg to limit results)
 
-2. Call the `plot_normalized_histo` method, passing in a phone number or Apple ID
+2. Call the `.plot_normalized_histo` method, passing in a phone number or Apple ID
 (and an option `limit=`) to see the ratio of your total text messages that are
 accounted for by the input contact information.
